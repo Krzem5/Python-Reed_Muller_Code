@@ -62,6 +62,7 @@ def reed_muller(r,m):
 		for j in range(1,i):
 			v&=vl[j]
 			il[j]=j
+		print(list(range(i,m)))
 		while (v):
 			mx[__bsf(v)]|=mx_m
 			v&=v-1
@@ -79,6 +80,7 @@ def reed_muller(r,m):
 						v&=vl[il[l]]
 						vm|=1<<il[l]
 					vm=((1<<m)-1)&(~vm)
+					print(bin(vm))
 					while (v):
 						mx[__bsf(v)]|=mx_m
 						v&=v-1
@@ -123,7 +125,7 @@ def decode(rm,dt):
 				return None
 			if (v>(rm[2]>>1)):
 				o|=m
-			m<<=1
+			m<<=1s
 		n=1
 		for j in range(0,rm[3]):
 			if (__parity(((o&rm[5][j])>>a)&((1<<(b-a))-1))):
@@ -136,3 +138,4 @@ def decode(rm,dt):
 rm=reed_muller(2,4)
 print(rm)
 print(bin(encode(rm,0b10101001011)),"0b100100001111011")
+# print(bin(decode(rm,encode(rm,0b10101001011))),"0b10101001011")
