@@ -67,7 +67,7 @@ def reed_muller(r,m):
 				v=(~v)&p
 			e[j]=v
 		for j in range(i+1,m):
-			v=vl[j-i+1]
+			v=vl[j]
 			vp=(~v)&p
 			q=vl[m-j]
 			for l in range(0,el):
@@ -96,7 +96,7 @@ def reed_muller(r,m):
 					e=[None for _ in range(0,el)]
 					vr[vri]=e
 					vri+=1
-					vm=((1<<m)-1)&(~vm)
+					vm=(n-1)&(~vm)
 					v=vl[__bsf(vm)]
 					vm&=vm-1
 					for l in range(0,el):
@@ -121,15 +121,16 @@ def reed_muller(r,m):
 					break
 			if (not nxt):
 				break
-	idx_l=[None for _ in range(0,r+1)]
-	idx_l[0]=1
+	idx_l=[None for _ in range(0,r+2)]
+	idx_l[0]=0
+	idx_l[1]=1
 	for i in range(1,r+1):
 		v=m-i+1
 		for j in range(m-i+2,m+1):
 			v*=j
 		for j in range(2,i+1):
 			v//=j
-		idx_l[i]=idx_l[i-1]+v
+		idx_l[i+1]=idx_l[i-1]+v
 	s=(1<<(m-r-1))-1
 	return (r,m,k,n,s,mx,idx_l,vr)
 
@@ -144,28 +145,27 @@ def encode(rm,dt):
 
 
 def decode(rm,dt):
+	i=1<<(rm[1]-rm[0])
 	o=0
-	for i in range(rm[0],-1,-1):
-		a=(0 if i==0 else rm[6][i-1])
-		b=rm[6][i]
-		for j in range(a,b):
+	for j in range(rm[0],-1,-1):
+		for k in range(rm[6][j],rm[6][j+1]):
 			v=0
-			sz=len(rm[7][j])
-			for k in range(0,sz):
-				v+=__parity(dt&rm[7][j][k])
-			if (v==(sz>>1)):
+			for l in range(0,i):
+				v+=__parity(dt&rm[7][k][l])
+			if (v==(i>>1)):
 				return -1
-			if (v>(sz>>1)):
-				o|=1<<j
-		m=1
-		for j in range(0,rm[3]):
-			if (__parity(((o&rm[5][j])>>a)&((1<<(b-a))-1))):
-				dt^=m
-			m<<=1
+			if (v>(i>>1)):
+				o|=1<<k
+		i<<=1
+		m=o&(((1<<(rm[6][j+1]-rm[6][j]))-1)<<rm[6][j])
+		for k in range(0,rm[3]):
+			if (__parity(rm[5][k]&m)):
+				dt^=1<<k
 	return o
 
 
 
-rm=reed_muller(2,4)
-print(bin(encode(rm,0b10101001011)),"0b100100001111011")
+rm=reed_muller(3,5)
+print(rm[:5])
+print(bin(encode(rm,0b10101001011)),"0b110011001111001111111100001111")
 print(bin(decode(rm,encode(rm,0b10101001011))),"0b10101001011")
