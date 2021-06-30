@@ -7,16 +7,6 @@ def __bsf(n):
 
 
 
-def __popcnt(n):
-	o=0
-	while (n):
-		if (n&1):
-			o+=1
-		n>>=1
-	return o
-
-
-
 def __parity(n):
 	o=0
 	while (n):
@@ -24,29 +14,6 @@ def __parity(n):
 			o^=1
 		n>>=1
 	return o
-
-
-
-def _generate_vec(o,m,vl,n):
-	v=vl[__bsf(m)]
-	m&=m-1
-	for i in range(0,len(o)):
-		if (i==(len(o)>>1)):
-			v=(~v)&n
-		o[i]=v
-	i=1
-	while (m):
-		v=vl[__bsf(m)]
-		vp=(~v)&n
-		p=vl[len(vl)-i]
-		for j in range(0,len(o)):
-			if (p&1):
-				o[j]&=v
-			else:
-				o[j]&=vp
-			p>>=1
-		m&=m-1
-		i+=1
 
 
 
@@ -87,12 +54,28 @@ def reed_muller(r,m):
 		for j in range(1,i):
 			v&=vl[j]
 			il[j]=j
-		vr[vri]=[None for _ in range(0,1<<(m-i))]
-		_generate_vec(vr[vri],((1<<(m-i))-1)<<i,vl,p)
-		vri+=1
 		while (v):
 			mx[__bsf(v)]|=mx_m
 			v&=v-1
+		el=1<<(m-i)
+		e=[None for _ in range(0,el)]
+		vr[vri]=e
+		vri+=1
+		v=vl[i]
+		for j in range(0,el):
+			if (j==(el>>1)):
+				v=(~v)&p
+			e[j]=v
+		for j in range(i+1,m):
+			v=vl[j-i+1]
+			vp=(~v)&p
+			q=vl[m-j]
+			for l in range(0,el):
+				if (q&1):
+					e[l]&=v
+				else:
+					e[l]&=vp
+				q>>=1
 		mx_m<<=1
 		while (True):
 			nxt=False
@@ -106,12 +89,33 @@ def reed_muller(r,m):
 					for l in range(1,i):
 						v&=vl[il[l]]
 						vm|=1<<il[l]
-					vr[vri]=[None for _ in range(0,1<<(m-i))]
-					_generate_vec(vr[vri],((1<<m)-1)&(~vm),vl,p)
-					vri+=1
 					while (v):
 						mx[__bsf(v)]|=mx_m
 						v&=v-1
+					el=1<<(m-i)
+					e=[None for _ in range(0,el)]
+					vr[vri]=e
+					vri+=1
+					vm=((1<<m)-1)&(~vm)
+					v=vl[__bsf(vm)]
+					vm&=vm-1
+					for l in range(0,el):
+						if (l==(el>>1)):
+							v=(~v)&p
+						e[l]=v
+					l=1
+					while (vm):
+						v=vl[__bsf(vm)]
+						vp=(~v)&p
+						q=vl[m-l]
+						for u in range(0,el):
+							if (q&1):
+								e[u]&=v
+							else:
+								e[u]&=vp
+							q>>=1
+						vm&=vm-1
+						l+=1
 					mx_m<<=1
 					nxt=True
 					break
