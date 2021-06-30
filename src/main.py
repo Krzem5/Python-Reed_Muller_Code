@@ -27,6 +27,29 @@ def __parity(n):
 
 
 
+def _generate_vec(o,m,vl,n):
+	v=vl[__bsf(m)]
+	m&=m-1
+	for i in range(0,len(o)):
+		if (i==(len(o)>>1)):
+			v=(~v)&n
+		o[i]=v
+	i=1
+	while (m):
+		v=vl[__bsf(m)]
+		vp=(~v)&n
+		p=vl[len(vl)-i]
+		for j in range(0,len(o)):
+			if (p&1):
+				o[j]&=v
+			else:
+				o[j]&=vp
+			p>>=1
+		m&=m-1
+		i+=1
+
+
+
 def reed_muller(r,m):
 	if (m<=r):
 		raise RuntimeError
@@ -39,6 +62,7 @@ def reed_muller(r,m):
 			v//=j
 		k+=v
 	n=1<<m
+	p=(1<<n)-1
 	vl=[None for _ in range(0,m)]
 	for i in range(0,m):
 		j=1<<(m-i-1)
@@ -55,6 +79,7 @@ def reed_muller(r,m):
 	for i in range(0,n):
 		mx[i]=1
 		vr[0][i]=1<<i
+	vri=1
 	mx_m=2
 	for i in range(1,r+1):
 		v=vl[0]
@@ -62,7 +87,9 @@ def reed_muller(r,m):
 		for j in range(1,i):
 			v&=vl[j]
 			il[j]=j
-		print(list(range(i,m)))
+		vr[vri]=[None for _ in range(0,1<<(m-i))]
+		_generate_vec(vr[vri],((1<<(m-i))-1)<<i,vl,p)
+		vri+=1
 		while (v):
 			mx[__bsf(v)]|=mx_m
 			v&=v-1
@@ -79,8 +106,9 @@ def reed_muller(r,m):
 					for l in range(1,i):
 						v&=vl[il[l]]
 						vm|=1<<il[l]
-					vm=((1<<m)-1)&(~vm)
-					print(bin(vm))
+					vr[vri]=[None for _ in range(0,1<<(m-i))]
+					_generate_vec(vr[vri],((1<<m)-1)&(~vm),vl,p)
+					vri+=1
 					while (v):
 						mx[__bsf(v)]|=mx_m
 						v&=v-1
@@ -92,8 +120,8 @@ def reed_muller(r,m):
 	idx_l=[None for _ in range(0,r+1)]
 	idx_l[0]=1
 	for i in range(1,r+1):
-		v=m-i
-		for j in range(2,m-i):
+		v=m-i+1
+		for j in range(m-i+2,m+1):
 			v*=j
 		for j in range(2,i+1):
 			v//=j
@@ -113,29 +141,27 @@ def encode(rm,dt):
 
 def decode(rm,dt):
 	o=0
-	m=1
 	for i in range(rm[0],-1,-1):
 		a=(0 if i==0 else rm[6][i-1])
 		b=rm[6][i]
 		for j in range(a,b):
 			v=0
-			for k in range(0,len(rm[7][j])):
+			sz=len(rm[7][j])
+			for k in range(0,sz):
 				v+=__parity(dt&rm[7][j][k])
-			if (v==rm[2]):
-				return None
-			if (v>(rm[2]>>1)):
-				o|=m
-			m<<=1s
-		n=1
+			if (v==(sz>>1)):
+				return -1
+			if (v>(sz>>1)):
+				o|=1<<j
+		m=1
 		for j in range(0,rm[3]):
 			if (__parity(((o&rm[5][j])>>a)&((1<<(b-a))-1))):
-				dt^=n
-			n<<=1
+				dt^=m
+			m<<=1
 	return o
 
 
 
 rm=reed_muller(2,4)
-print(rm)
 print(bin(encode(rm,0b10101001011)),"0b100100001111011")
-# print(bin(decode(rm,encode(rm,0b10101001011))),"0b10101001011")
+print(bin(decode(rm,encode(rm,0b10101001011))),"0b10101001011")
