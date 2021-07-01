@@ -92,7 +92,6 @@ def reed_muller(r,m):
 					while (v):
 						mx[__bsf(v)]|=mx_m
 						v&=v-1
-					el=1<<(m-i)
 					e=[None for _ in range(0,el)]
 					vr[vri]=e
 					vri+=1
